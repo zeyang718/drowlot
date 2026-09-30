@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>抽签助手 · 共享版</title>
+<style>
+  :root {
+    --bg1: #1f1b3a;
+    --bg2: #3b1d4f;
+    --bg3: #182442;
+    --card: #ffffff;
+    --card-2: #f7f6fb;
+    --ink: #232136;
+    --muted: #6f6b8c;
+    --accent: #f59e0b;
+    --accent-2: #f97316;
+    --accent-soft: #fff3d6;
+    --violet: #7c5cff;
+    --violet-soft: #efe9ff;
+    --green: #10b981;
+    --red: #ef4444;
+    --line: #eceaf4;
+    --shadow: 0 20px 50px rgba(20, 12, 50, 0.35);
+    --radius: 20px;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+      "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    color: var(--ink);
+    min-height: 100vh;
+    background:
+      radial-gradient(1200px 700px at 15% -10%, rgba(124, 92, 255, 0.35), transparent 60%),
+      radial-gradient(1000px 600px at 100% 0%, rgba(249, 115, 22, 0.28), transparent 55%),
+      linear-gradient(135deg, var(--bg1), var(--bg2) 50%, var(--bg3));
+    background-attachment: fixed;
+    padding: 32px 20px 64px;
+  }
+
+  .wrap { max-width: 1080px; margin: 0 auto; }
+
+  header { text-align: center; color: #fff; margin-bottom: 24px; }
+  header h1 {
+    font-size: clamp(28px, 5vw, 42px);
+    margin: 0 0 8px;
+    letter-spacing: 2px;
+    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  }
+  header p { margin: 0; color: rgba(255, 255, 255, 0.82); font-size: 15px; }
+
+  .statusbar {
+    display: flex;
+    justify-content: center;
+    gap: 18px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+    font-size: 13px;
+  }
+  .statusbar .item {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+    padding: 6px 14px;
+    border-radius: 999px;
+    backdrop-filter: blur(4px);
+  }
+  .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #f59e0b; display: inline-block;
+  }
+  .dot.ok { background: #34d399; }
+  .dot.bad { background: #f87171; }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    gap: 22px;
+    align-items: start;
+  }
+
+  .card {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 22px;
+  }
+
+  .card h2 {
+    font-size: 16px;
+    margin: 0 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    margin: 0 0 8px;
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 170px;
+    resize: vertical;
+    border: 1.5px solid var(--line);
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-size: 15px;
+    font-family: inherit;
+    color: var(--ink);
+    background: var(--card-2);
+    line-height: 1.6;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  textarea:focus {
+    outline: none;
+    border-color: var(--violet);
+    box-shadow: 0 0 0 4px rgba(124, 92, 255, 0.15);
+    background: #fff;
+  }
+
+  .hint { font-size: 12px; color: var(--muted); margin-top: 8px; line-height: 1.5; }
+
+  .row { display: flex; gap: 14px; margin-top: 18px; }
+  .field { flex: 1; }
+
+  input[type="number"] {
+    width: 100%;
+    border: 1.5px solid var(--line);
+    border-radius: 12px;
+    padding: 11px 14px;
+    font-size: 16px;
+    font-family: inherit;
+    color: var(--ink);
+    background: var(--card-2);
+  }
+  input[type="number"]:focus {
+    outline: none;
+    border-color: var(--violet);
+    box-shadow: 0 0 0 4px rgba(124, 92, 255, 0.15);
+    background: #fff;
+  }
+
+  .seg {
+    display: flex;
+    background: var(--card-2);
+    border: 1.5px solid var(--line);
+    border-radius: 12px;
+    padding: 4px;
+    gap: 4px;
+  }
+  .seg button {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 9px 6px;
+    border-radius: 9px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.18s, color 0.18s;
+  }
+  .seg button.active {
+    background: #fff;
+    color: var(--violet);
+    box-shadow: 0 3px 10px rgba(20, 12, 50, 0.1);
+  }
+
+  .btn {
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 600;
+    border-radius: 12px;
+    padding: 11px 16px;
+    font-size: 14px;
+    transition: transform 0.08s, opacity 0.18s, background 0.18s;
+  }
+  .btn:active { transform: translateY(1px); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .btn-ghost {
+    background: var(--card-2);
+    color: var(--muted);
+    border: 1.5px solid var(--line);
+    flex: 1;
+  }
+  .btn-ghost:hover { background: #efedf7; }
+
+  .btn-primary {
+    margin-top: 18px;
+    width: 100%;
+    background: var(--violet);
+    color: #fff;
+  }
+  .btn-primary:hover { background: #6a48ff; }
+
+  .hostbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    background: var(--card-2);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 10px 12px;
+    margin-bottom: 16px;
+    font-size: 13px;
+  }
+  .hostbar .status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .hostbar .status.host { color: var(--green); }
+  .hostbar .btn { flex: 0 0 auto; padding: 8px 12px; }
+
+  .watch-note {
+    background: var(--violet-soft);
+    color: var(--violet);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 13px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .draw-btn {
+    margin-top: 22px;
+    width: 100%;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: #fff;
+    padding: 16px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    box-shadow: 0 12px 28px rgba(249, 115, 22, 0.42);
+    transition: transform 0.08s, box-shadow 0.2s, opacity 0.2s;
+  }
+  .draw-btn:hover { box-shadow: 0 16px 34px rgba(249, 115, 22, 0.52); }
+  .draw-btn:active { transform: translateY(2px); }
+  .draw-btn:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+
+  .result-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+  .result-title h2 { margin: 0; }
+
+  .toolbar { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+  .toolbar .btn { flex: 1; }
+
+  .progress {
+    margin-top: 16px;
+    background: var(--card-2);
+    border-radius: 999px;
+    height: 10px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+  }
+  .progress .fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    transition: width 0.4s ease;
+  }
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+
+  .placeholder {
+    color: var(--muted);
+    padding: 70px 20px;
+    font-size: 15px;
+    line-height: 1.7;
+    text-align: center;
+  }
+
+  .reveal {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 14px;
+    margin-top: 10px;
+  }
+  .slot {
+    background: linear-gradient(160deg, #fffdf4, var(--accent-soft));
+    border: 1.5px solid #ffe2a8;
+    border-radius: 16px;
+    padding: 26px 12px;
+    min-height: 96px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-align: center;
+    animation: pop 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.3);
+  }
+  .slot .no { font-size: 11px; font-weight: 700; color: var(--accent-2); letter-spacing: 1px; }
+  .slot .name { font-size: 18px; font-weight: 700; color: var(--ink); word-break: break-word; line-height: 1.35; }
+
+  @keyframes pop {
+    from { transform: scale(0.6); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  .history { margin-top: 24px; }
+  .history h3 { font-size: 14px; color: var(--muted); margin: 0 0 12px; display: flex; align-items: center; gap: 6px; }
+  .history-list { display: flex; flex-direction: column; gap: 10px; max-height: 320px; overflow-y: auto; }
+  .history-item {
+    background: var(--card-2);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+  }
+  .history-item .time { color: var(--muted); font-size: 12px; white-space: nowrap; }
+  .history-item .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    background: var(--violet-soft);
+    color: var(--violet);
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 13px;
+  }
+
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: 30px;
+    transform: translateX(-50%) translateY(20px);
+    background: #2b2747;
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 12px;
+    font-size: 14px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s, transform 0.25s;
+    z-index: 50;
+    max-width: 90vw;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .confetti {
+    position: fixed;
+    top: -12px;
+    width: 10px;
+    height: 14px;
+    border-radius: 2px;
+    z-index: 60;
+    pointer-events: none;
+    animation: fall linear forwards;
+  }
+  @keyframes fall {
+    to { transform: translateY(110vh) rotate(720deg); opacity: 0.2; }
+  }
+
+  @media (max-width: 860px) {
+    .layout { grid-template-columns: 1fr; }
+    .row { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>🎯 抽签助手 · 共享版</h1>
+      <p>大家共用同一份签，结果实时同步</p>
+      <div class="statusbar">
+        <span class="item"><span class="dot" id="connDot"></span><span id="connText">连接中…</span></span>
+        <span class="item">在线 <b id="onlineCount">0</b> 人</span>
+        <span class="item" id="roundInfo">等待设置</span>
+      </div>
+    </header>
+
+    <div class="layout">
+      <!-- 设置区 -->
+      <aside class="card">
+        <h2>⚙️ 抽签设置（共享）</h2>
+
+        <div class="hostbar">
+          <span class="status" id="hostStatus">🔒 观众模式（仅可观看）</span>
+          <button type="button" class="btn btn-ghost" id="hostBtn">主持人登录</button>
+        </div>
+
+        <label for="itemsInput">抽签内容（每行一个）</label>
+        <textarea id="itemsInput" placeholder="在这里输入签内容，每行一个，例如：&#10;一等奖&#10;二等奖&#10;三等奖&#10;谢谢参与"></textarea>
+        <div class="hint">修改内容后点下方「保存设置」，会同步给所有人并开启新一轮。</div>
+
+        <div class="row">
+          <div class="field">
+            <label for="quantityInput">每次抽取数量</label>
+            <input type="number" id="quantityInput" min="1" value="1">
+          </div>
+          <div class="field">
+            <label>抽取模式</label>
+            <div class="seg" id="modeSeg">
+              <button type="button" data-mode="unique" class="active">不重复</button>
+              <button type="button" data-mode="repeat">可重复</button>
+            </div>
+          </div>
+        </div>
+
+        <button type="button" class="btn btn-primary" id="saveBtn">保存设置（同步给所有人）</button>
+      </aside>
+
+      <!-- 结果区 -->
+      <main class="card">
+        <div class="result-title">
+          <h2>🎉 本轮结果</h2>
+        </div>
+
+        <div class="watch-note" id="watchNote">👀 当前为观看模式：只有主持人能设置内容和抽签，其他人可实时查看结果。</div>
+
+        <div class="placeholder" id="revealPlaceholder">设置好签内容并保存后，点「开始抽签」即可看到结果 ✨</div>
+        <div class="reveal" id="revealWrap"></div>
+
+        <div class="progress" id="progressWrap" hidden>
+          <div class="fill" id="progressFill"></div>
+        </div>
+        <div class="progress-label" id="progressLabel" hidden>
+          <span id="drawnLabel"></span>
+          <span id="remainingLabel"></span>
+        </div>
+
+        <div class="toolbar">
+          <button type="button" class="btn btn-ghost" id="undoBtn">撤销上一次</button>
+          <button type="button" class="btn btn-ghost" id="resetRoundBtn">重新开始本轮</button>
+          <button type="button" class="btn btn-ghost" id="clearAllBtn">清空全部</button>
+        </div>
+
+        <button type="button" class="draw-btn" id="drawBtn">开 始 抽 签</button>
+
+        <div class="history" id="historyWrap" hidden>
+          <h3>🕘 抽签记录</h3>
+          <div class="history-list" id="historyList"></div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    (function () {
+      "use strict";
+
+      var $ = function (id) { return document.getElementById(id); };
+
+      var itemsEl = $("itemsInput");
+      var quantityEl = $("quantityInput");
+      var modeSeg = $("modeSeg");
+      var saveBtn = $("saveBtn");
+      var drawBtn = $("drawBtn");
+      var undoBtn = $("undoBtn");
+      var resetRoundBtn = $("resetRoundBtn");
+      var clearAllBtn = $("clearAllBtn");
+      var connDot = $("connDot");
+      var connText = $("connText");
+      var onlineEl = $("onlineCount");
+      var roundInfo = $("roundInfo");
+      var revealPlaceholder = $("revealPlaceholder");
+      var revealWrap = $("revealWrap");
+      var progressWrap = $("progressWrap");
+      var progressFill = $("progressFill");
+      var progressLabel = $("progressLabel");
+      var drawnLabel = $("drawnLabel");
+      var remainingLabel = $("remainingLabel");
+      var historyWrap = $("historyWrap");
+      var historyList = $("historyList");
+      var toastEl = $("toast");
+      var hostBtn = $("hostBtn");
+      var hostStatus = $("hostStatus");
+      var watchNote = $("watchNote");
+
+      var state = null;
+      var initialized = false;
+      var lastShownId = null;
+      var toastTimer = null;
+      var isHost = false;
+      var hostPassword = "";
+
+      function showToast(msg) {
+        toastEl.textContent = msg;
+        toastEl.classList.add("show");
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () {
+          toastEl.classList.remove("show");
+        }, 2600);
+      }
+
+      function setHostUI(host) {
+        isHost = host;
+        itemsEl.disabled = !host;
+        quantityEl.disabled = !host;
+        Array.prototype.forEach.call(modeSeg.querySelectorAll("button"), function (b) {
+          b.disabled = !host;
+        });
+        saveBtn.disabled = !host;
+        undoBtn.disabled = !host;
+        resetRoundBtn.disabled = !host;
+        clearAllBtn.disabled = !host;
+        hostStatus.textContent = host ? "🔓 主持人模式" : "🔒 观众模式（仅可观看）";
+        hostStatus.className = "status" + (host ? " host" : "");
+        hostBtn.textContent = host ? "退出" : "主持人登录";
+        drawBtn.textContent = host ? "开 始 抽 签" : "仅主持人可抽签";
+        watchNote.hidden = host;
+        refreshDrawButton();
+      }
+
+      function refreshDrawButton() {
+        if (!state) { drawBtn.disabled = true; return; }
+        var canDraw = state.roundItems.length > 0 &&
+          (state.mode !== "unique" || (state.pool.length > 0 && state.quantity <= state.pool.length));
+        drawBtn.disabled = !isHost || !canDraw;
+      }
+
+      function loginHost() {
+        var pw = window.prompt("请输入主持人密码：");
+        if (pw === null || pw === "") return;
+        postJSON("/api/auth", { password: pw }).then(function () {
+          hostPassword = pw;
+          try { sessionStorage.setItem("drawlot.pw", pw); } catch (e) { /* ignore */ }
+          setHostUI(true);
+          showToast("已进入主持人模式 ✅");
+        }).catch(function (err) {
+          showToast(err.message || "密码错误");
+        });
+      }
+
+      function logoutHost() {
+        hostPassword = "";
+        try { sessionStorage.removeItem("drawlot.pw"); } catch (e) { /* ignore */ }
+        setHostUI(false);
+        showToast("已退出主持人模式");
+      }
+
+      function tryAutoLogin() {
+        var savedPw = null;
+        try { savedPw = sessionStorage.getItem("drawlot.pw"); } catch (e) { /* ignore */ }
+        if (!savedPw) return;
+        postJSON("/api/auth", { password: savedPw }).then(function () {
+          hostPassword = savedPw;
+          setHostUI(true);
+        }).catch(function () { /* 密码已失效，保持观众模式 */ });
+      }
+
+      function getItems() {
+        return itemsEl.value.split(/\r?\n/).map(function (s) { return s.trim(); }).filter(Boolean);
+      }
+      function getMode() {
+        var b = modeSeg.querySelector("button.active");
+        return b ? b.getAttribute("data-mode") : "unique";
+      }
+      function getQuantity() {
+        var n = parseInt(quantityEl.value, 10);
+        return (isNaN(n) || n < 1) ? 1 : n;
+      }
+
+      function setModeUI(m) {
+        Array.prototype.forEach.call(modeSeg.querySelectorAll("button"), function (b) {
+          b.classList.toggle("active", b.getAttribute("data-mode") === m);
+        });
+      }
+
+      function postJSON(path, body) {
+        return fetch(path, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body || {})
+        }).then(function (r) {
+          return r.json().catch(function () { return {}; }).then(function (data) {
+            if (!r.ok) {
+              throw new Error(data.error || ("请求失败 " + r.status));
+            }
+            return data;
+          });
+        });
+      }
+
+      function renderHistory(history) {
+        historyList.innerHTML = "";
+        if (!history || history.length === 0) {
+          historyWrap.hidden = true;
+          return;
+        }
+        historyWrap.hidden = false;
+        history.forEach(function (rec) {
+          var item = document.createElement("div");
+          item.className = "history-item";
+
+          var time = document.createElement("span");
+          time.className = "time";
+          time.textContent = rec.time;
+
+          var chips = document.createElement("div");
+          chips.className = "chips";
+          rec.values.forEach(function (v) {
+            var c = document.createElement("span");
+            c.className = "chip";
+            c.textContent = v;
+            chips.appendChild(c);
+          });
+
+          item.appendChild(time);
+          item.appendChild(chips);
+          historyList.appendChild(item);
+        });
+      }
+
+      function fireConfetti() {
+        var colors = ["#f59e0b", "#f97316", "#7c5cff", "#10b981", "#ef4444", "#38bdf8"];
+        for (var i = 0; i < 60; i++) {
+          var p = document.createElement("div");
+          p.className = "confetti";
+          p.style.left = Math.random() * 100 + "vw";
+          p.style.background = colors[Math.floor(Math.random() * colors.length)];
+          p.style.animationDuration = (2 + Math.random() * 2) + "s";
+          p.style.animationDelay = (Math.random() * 0.4) + "s";
+          document.body.appendChild(p);
+          (function (el) {
+            setTimeout(function () { el.remove(); }, 4600);
+          })(p);
+        }
+      }
+
+      function renderSlots(values, animate) {
+        revealWrap.innerHTML = "";
+        revealPlaceholder.hidden = true;
+        values.forEach(function (v, i) {
+          var slot = document.createElement("div");
+          slot.className = "slot";
+          var no = document.createElement("div");
+          no.className = "no";
+          no.textContent = "签 " + (i + 1);
+          var name = document.createElement("div");
+          name.className = "name";
+          name.textContent = animate ? "?" : v;
+          slot.appendChild(no);
+          slot.appendChild(name);
+          revealWrap.appendChild(slot);
+        });
+        if (animate) tumble(values);
+      }
+
+      function tumble(values) {
+        var names = revealWrap.querySelectorAll(".name");
+        var candidates = (state && state.roundItems.length) ? state.roundItems : values;
+        var start = performance.now();
+        var duration = 1200;
+        function frame(now) {
+          var prog = Math.min((now - start) / duration, 1);
+          Array.prototype.forEach.call(names, function (n) {
+            n.textContent = candidates[Math.floor(Math.random() * candidates.length)];
+          });
+          if (prog < 1) {
+            requestAnimationFrame(frame);
+          } else {
+            Array.prototype.forEach.call(names, function (n, i) {
+              n.textContent = values[i];
+            });
+            fireConfetti();
+          }
+        }
+        requestAnimationFrame(frame);
+      }
+
+      function applyState(s) {
+        state = s;
+
+        onlineEl.textContent = s.online;
+
+        if (s.mode === "unique") {
+          var drawn = s.total - s.pool.length;
+          progressWrap.hidden = false;
+          progressLabel.hidden = false;
+          progressFill.style.width = (s.total > 0 ? Math.round(drawn / s.total * 100) : 0) + "%";
+          drawnLabel.textContent = "已抽 " + drawn + " 个";
+          remainingLabel.textContent = "剩余 " + s.pool.length + " 个";
+          roundInfo.textContent = "不重复 · 共 " + s.total + " 签";
+        } else {
+          progressWrap.hidden = true;
+          progressLabel.hidden = true;
+          roundInfo.textContent = "可重复 · 共 " + s.total + " 签";
+        }
+
+        setModeUI(s.mode);
+        if (document.activeElement !== quantityEl) {
+          quantityEl.value = s.quantity;
+        }
+
+        var joined = s.roundItems.join("\n");
+        if (document.activeElement !== itemsEl && itemsEl.value !== joined) {
+          itemsEl.value = joined;
+        }
+
+        refreshDrawButton();
+
+        renderHistory(s.history);
+
+        var top = s.history[0];
+        if (top) {
+          if (top.id !== lastShownId) {
+            renderSlots(top.values, initialized);
+            lastShownId = top.id;
+          }
+          revealPlaceholder.hidden = true;
+        } else {
+          revealWrap.innerHTML = "";
+          revealPlaceholder.hidden = false;
+          lastShownId = null;
+        }
+
+        initialized = true;
+      }
+
+      function setConnected(ok) {
+        connDot.className = "dot " + (ok ? "ok" : "bad");
+        connText.textContent = ok ? "已连接" : "连接中…";
+      }
+
+      // 初始化：先拉取一次状态，再订阅实时推送
+      fetch("/api/state")
+        .then(function (r) { return r.json(); })
+        .then(applyState)
+        .catch(function () { setConnected(false); });
+
+      var es = new EventSource("/api/events");
+      es.onopen = function () { setConnected(true); };
+      es.onmessage = function (e) {
+        try { applyState(JSON.parse(e.data)); } catch (err) { /* ignore */ }
+      };
+      es.onerror = function () { setConnected(false); };
+
+      // 事件
+      modeSeg.addEventListener("click", function (e) {
+        var b = e.target.closest("button");
+        if (b) setModeUI(b.getAttribute("data-mode"));
+      });
+
+      saveBtn.addEventListener("click", function () {
+        var items = getItems();
+        if (items.length === 0) {
+          showToast("请先输入抽签内容");
+          return;
+        }
+        saveBtn.disabled = true;
+        postJSON("/api/config", { items: items, mode: getMode(), quantity: getQuantity(), password: hostPassword })
+          .then(function () { showToast("设置已同步给所有人 ✅"); })
+          .catch(function (err) { showToast(err.message); })
+          .finally(function () { saveBtn.disabled = !isHost; });
+      });
+
+      drawBtn.addEventListener("click", function () {
+        postJSON("/api/draw", { password: hostPassword }).catch(function (err) { showToast(err.message); });
+      });
+
+      undoBtn.addEventListener("click", function () {
+        postJSON("/api/undo", { password: hostPassword }).catch(function (err) { showToast(err.message); });
+      });
+
+      resetRoundBtn.addEventListener("click", function () {
+        if (!confirm("重新开始本轮？将清空已抽结果（保留签内容）。")) return;
+        postJSON("/api/reset", { password: hostPassword }).catch(function (err) { showToast(err.message); });
+      });
+
+      clearAllBtn.addEventListener("click", function () {
+        if (!confirm("清空全部签内容和抽签结果？")) return;
+        postJSON("/api/config", { items: [], mode: getMode(), quantity: getQuantity(), password: hostPassword })
+          .catch(function (err) { showToast(err.message); });
+      });
+
+      hostBtn.addEventListener("click", function () {
+        if (isHost) logoutHost();
+        else loginHost();
+      });
+
+      document.addEventListener("keydown", function (e) {
+        if ((e.metaKey || e.ctrlKey) && e.key === "Enter" && isHost && document.activeElement !== itemsEl) {
+          e.preventDefault();
+          drawBtn.click();
+        }
+      });
+
+      setHostUI(false);
+      tryAutoLogin();
+    })();
+  </script>
+</body>
+</html>

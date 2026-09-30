@@ -1,0 +1,13 @@
+{
+  "name": "drawlot-shared",
+  "version": "1.0.0",
+  "description": "抽签助手 · 共享版（多人实时同步，主持人模式）",
+  "private": true,
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
